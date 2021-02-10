@@ -10,7 +10,7 @@ Desktop:
 Mobile:
 ![demo](https://i.imgur.com/cPiySPG.png)
 ![demo](https://i.imgur.com/TI5iGbs.png)
-![demo](https://i.imgur.com/cPiySPG.png)
+![demo](https://i.imgur.com/OFrvuFi.png)
 
 
 ## Installation
