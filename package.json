@@ -13,12 +13,10 @@
     "bootstrap": "^4.6.0",
     "jquery": "^3.5.1",
     "matter-js": "^0.16.1",
-    "poly-decomp": "^0.3.0",
     "react": "^17.0.1",
     "react-bootstrap": "^1.4.3",
     "react-dom": "^17.0.1",
-    "react-scripts": "4.0.2",
-    "web-vitals": "^1.1.0"
+    "react-scripts": "4.0.2"
   },
   "scripts": {
     "start": "react-scripts start",
