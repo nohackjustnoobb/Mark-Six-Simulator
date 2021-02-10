@@ -109,12 +109,26 @@ body {
 }
 
 .Bet {
+  overflow: hidden;
   margin: 10px;
   padding: 10px 0 0 0;
   background-color: rgba(255, 255, 255, 0.9);
   border-radius: 25px;
   box-shadow: 0 0 5px rgba(0, 0, 0, 0.6);
   opacity: 85%;
+}
+
+#bet_no {
+  display: grid;
+  justify-content: center;
+  grid-template-columns: repeat(7, 35px);
+  grid-template-rows: repeat(7, 35px);
+  grid-gap: 5px 13px;
+}
+
+#bet_no img {
+  width: 35px;
+  height: 35px;
 }
 
 .Marksix {
@@ -208,10 +222,30 @@ body {
   height: 35px;
 }
 
-#marksix {
+#bet_div h6 {
+  text-align: center;
+}
+
+#bet_number {
   position: relative;
-  top: 50%;
-  transform: translateY(-70%);
+  display: flex;
+  justify-content: center;
+  left: 50%;
+  font-size: 30px;
+  margin: 0;
+  transform: translateX(-50%);
+  width: 270px;
+  height: 50px;
+  background-color: white;
+  opacity: 0.9;
+  border: 3px solid rgba(16, 16, 158, 0.8);
+  border-radius: 25px;
+}
+
+#bet_number img{
+  width: 35px;
+  height: 35px;
+  transform: translateY(5px);
 }
 
 #warning {
@@ -221,7 +255,7 @@ body {
   transform: translateX(-50%);
 }
 
-#start_rolling {
+button {
   transition: all 0.3s linear;
   position: relative;
   color: rgba(16, 16, 158, 0.8);
@@ -236,18 +270,18 @@ body {
   transform: translate(-50%, 50%);
 }
 
-#start_rolling:hover:enabled {
+button:hover:enabled {
   background-color: rgba(16, 16, 158, 0.8);
   color: white;
 }
 
-#start_rolling:active {
+button:active {
   transition: all 0.1s linear;
   box-shadow: 0 0 5px 2px rgba(16, 16, 158, 0.8);
   color: rgba(255, 255, 255, 0.8);
 }
 
-#start_rolling:disabled {
+button:disabled {
   cursor: not-allowed;
   border: 3px solid #ccc;
   color: #ccc;
@@ -267,7 +301,9 @@ body {
 #roll_history li {
   display: flex;
   justify-content: center;
+  transition: all 0.2s linear;
   transform: translateX(-20px);
+  background-color: rgba(255, 255, 255, 0);
 }
 
 #roll_history img {
@@ -279,6 +315,18 @@ body {
 #roll_history li div {
   display: flex;
   align-content: center;
+}
+
+#roll_history li:hover {
+  background-color: rgba(255, 255, 255, 1);
+}
+
+#bet {
+  font-size: 17px;
+  text-align: center;
+  padding: 0;
+  width: 90px;
+  height: 40px;
 }
 
 @media only screen and (max-width: 800px) {

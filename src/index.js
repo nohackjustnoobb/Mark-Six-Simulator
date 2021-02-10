@@ -13,6 +13,7 @@ document.body.innerHTML = '<div id="root"></div>';
 //global variable
 var engine, render;
 var roll_history = [];
+var bet_list = [];
 
 //generate 1-49 image url
 const image_url = Array(49)
@@ -308,7 +309,7 @@ class Intro extends React.Component {
 class Marksix extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { div: false, open: true, roll: [], click: true };
+    this.state = { div: false, open: true, roll: [], click: true, award: null };
   }
   componentDidMount() {
     setTimeout(() => {
@@ -317,6 +318,7 @@ class Marksix extends React.Component {
       });
     }, 100);
     window.addEventListener("resize", () => this.forceUpdate());
+    window.update_bet = () => this.forceUpdate();
     createWorld();
   }
 
@@ -345,6 +347,7 @@ class Marksix extends React.Component {
       roll: [],
       click: false,
     });
+    window.toggle_click();
     for (let _ = 0; _ < 7; _++) {
       setTimeout(() => {
         var roll = new Promise((resolve) => {
@@ -396,6 +399,8 @@ class Marksix extends React.Component {
         click: true,
       });
       roll_history.push(this.state.roll);
+      window.toggle_click();
+      this.check_bet();
       window.update();
     }, 32200);
   }
@@ -414,12 +419,66 @@ class Marksix extends React.Component {
       roll: roll,
     });
     window.update();
+    this.check_bet();
+  }
+
+  check_bet() {
+    if (bet_list) {
+      var same = 0;
+      var sno = false;
+      var _ = roll_history[roll_history.length - 1];
+      var award = null;
+      for (var i in _) {
+        if (bet_list.indexOf(_[i]) != -1) {
+          if (i == 7) {
+            sno = true;
+          } else {
+            same++;
+          }
+        }
+      }
+      switch (same) {
+        case 3:
+          if (sno) {
+            award = "六";
+            break;
+          } else {
+            award = "七";
+            break;
+          }
+        case 4:
+          if (sno) {
+            award = "四";
+            break;
+          } else {
+            award = "五";
+            break;
+          }
+        case 5:
+          if (sno) {
+            award = "二";
+            break;
+          } else {
+            award = "三";
+            break;
+          }
+        case 6:
+          award = "頭";
+          break;
+        default:
+          award = null;
+      }
+    }
+    bet_list = [];
+    this.setState({
+      award: award,
+    });
   }
 
   render() {
     const height = this.state.open
       ? phone
-        ? $(document).height() * 0.96 + 100
+        ? $(document).height() * 0.96 + 150
         : $(document).height() * 0.96 + 10
       : 60;
     const div = this.state.div
@@ -463,6 +522,9 @@ class Marksix extends React.Component {
         </li>
       );
     });
+    const bet_ = bet_list.map((value) => {
+      return <img src={image_url[value - 1]}></img>;
+    });
 
     return (
       <div className="Marksix center" style={div}>
@@ -472,37 +534,51 @@ class Marksix extends React.Component {
         <div onClick={() => this.toggle_open()}>
           <FontAwesomeIcon icon={faAngleLeft} rotation={rotation} />
         </div>
-        <h6
-          id="warning"
-          style={{ display: this.state.open ? "block" : "none" }}
-        >
-          注意：攪珠時請不要切換到其他分頁，否則球會飛出範圍。
-        </h6>
         <div
-          id="marksix"
-          style={{ display: this.state.open ? "block" : "none" }}
+          style={{
+            height: "90%",
+            width: "100%",
+            overflowY: "scroll",
+          }}
         >
-          <div id="world"></div>
-          <h5>攪珠結果：</h5>
-          <div id="result">
-            <ul>{result_list}</ul>
+          <div id="bet_div">
+            <h6>下注或中獎顯示：</h6>
+            <div id="bet_number">
+              {bet_list.length
+                ? bet_
+                : this.state.award
+                ? this.state.award + "獎"
+                : "無獎"}
+            </div>
           </div>
-          <button
-            id="start_rolling"
-            onClick={() => this.start_roll()}
-            disabled={!this.state.click}
-          >
-            開始攪珠
-          </button>
+          <div id="marksix">
+            <div id="world"></div>
+            <h5>攪珠結果：</h5>
+            <div id="result">
+              <ul>{result_list}</ul>
+            </div>
+            <button
+              onClick={() => this.start_roll()}
+              disabled={!this.state.click}
+            >
+              開始攪珠
+            </button>
+            <h6
+              id="quick_roll"
+              style={{
+                cursor: this.state.click ? "pointer" : "not-allowed",
+                color: this.state.click ? "#00006d" : "#ccc",
+              }}
+              onClick={this.state.click ? () => this.quick_roll() : () => {}}
+            >
+              <u>快速攪珠</u>
+            </h6>
+          </div>
           <h6
-            id="quick_roll"
-            style={{
-              cursor: this.state.click ? "pointer" : "not-allowed",
-              color: this.state.click ? "#00006d" : "#ccc",
-            }}
-            onClick={this.state.click ? () => this.quick_roll() : () => {}}
+            id="warning"
+            style={{ display: this.state.open ? "block" : "none" }}
           >
-            <u>快速攪珠</u>
+            注意：攪珠時請不要切換到其他分頁，否則球會飛出範圍。
           </h6>
         </div>
       </div>
@@ -513,7 +589,12 @@ class Marksix extends React.Component {
 class Bet extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { div: false, open: !phone };
+    this.state = {
+      div: false,
+      open: !phone,
+      number: Array(49).fill(false),
+      click: true,
+    };
   }
   componentDidMount() {
     setTimeout(() => {
@@ -522,12 +603,51 @@ class Bet extends React.Component {
       });
     }, 100);
     window.addEventListener("resize", () => this.forceUpdate());
+    window.toggle_click = () => this.toggle_click();
   }
 
   toggle_open() {
     this.setState({
       open: !this.state.open,
     });
+  }
+
+  toggle_number(number) {
+    var list = this.state.number;
+    var counter = 0;
+    list[number] = !list[number];
+    for (var i of list) {
+      if (i) {
+        counter++;
+      }
+    }
+    if (!list[number] || counter <= 7) {
+      this.setState({
+        number: list,
+      });
+    }
+  }
+
+  toggle_click() {
+    this.setState({
+      click: !this.state.click,
+    });
+  }
+
+  bet() {
+    var _bet = [];
+    for (var i in this.state.number) {
+      if (this.state.number[i]) {
+        _bet.push(Number(i) + 1);
+      }
+    }
+    if (_bet.length == 6 || _bet.length == 7) {
+      bet_list = _bet;
+      this.setState({
+        number: Array(49).fill(false),
+      });
+      window.update_bet();
+    }
   }
 
   render() {
@@ -561,6 +681,41 @@ class Bet extends React.Component {
         </div>
         <div onClick={() => this.toggle_open()}>
           <FontAwesomeIcon icon={faAngleLeft} rotation={rotation} />
+        </div>
+        <div
+          style={{
+            height: "85%",
+            width: "100%",
+            overflowY: "scroll",
+          }}
+        >
+          <h6 style={{ textAlign: "center" }}>
+            點擊數字以選擇(只能選擇6或7個號碼)
+          </h6>
+          <div id="bet_no">
+            {image_url.map((value, index) => (
+              <img
+                src={value}
+                onClick={
+                  this.state.click ? () => this.toggle_number(index) : () => {}
+                }
+                style={{
+                  transform: this.state.number[index]
+                    ? "scale(0.8, 0.8)"
+                    : "scale(1, 1)",
+                  opacity: this.state.number[index] ? "0.5" : "1",
+                  cursor: this.state.click ? "pointer" : "not-allowed",
+                }}
+              ></img>
+            ))}
+          </div>
+          <button
+            id="bet"
+            onClick={() => this.bet()}
+            disabled={!this.state.click}
+          >
+            下注
+          </button>
         </div>
       </div>
     );
