@@ -10,6 +10,10 @@ import Matter, { Composite, Composites } from "matter-js";
 //generate root
 document.body.innerHTML = '<div id="root"></div>';
 
+//global variable
+var engine, render;
+var roll_history = [];
+
 //generate 1-49 image url
 const image_url = Array(49)
   .fill(0)
@@ -22,12 +26,12 @@ const image_url = Array(49)
       "_s.gif?CV=L3.08R1a"
     );
   });
+
 //check phone user
 const phone = $(document).width() <= 760;
 
 //phsics engine
 const { Engine, Render, World, Bodies, Body, Common } = Matter;
-var engine, render;
 function createWorld() {
   //phsics environment
   engine = Engine.create();
@@ -238,7 +242,6 @@ class Intro extends React.Component {
           height: height,
           opacity: 0.85,
           transform: "translate(0, -0)",
-          overflowY: this.state.open ? "scroll" : "hidden",
         }
       : {
           height: height,
@@ -255,7 +258,6 @@ class Intro extends React.Component {
       width: 200,
     };
     const rotation = this.state.open ? 270 : 0;
-    const style_p = { display: this.state.open ? "block" : "none" };
 
     return (
       <div className="Intro left" style={div}>
@@ -265,31 +267,39 @@ class Intro extends React.Component {
         <div onClick={() => this.toggle_open()}>
           <FontAwesomeIcon icon={faAngleLeft} rotation={rotation} />
         </div>
-        <p style={style_p}>
-          真實六合彩攪珠結果：
-          <br />
-          當中數據從
-          <a
-            href="https://bet.hkjc.com/marksix/Results.aspx?lang=ch"
-            target="_blank"
-          >
-            賽馬會官網
-          </a>
-          所得。
-          <br /> <br />
-          模擬攪珠： <br />
-          每個號碼的攪珠時間大約為2.5秒，而程式會將最底的號碼作為中獎號碼，一共6個號碼和1個特別號碼。
-          <br />
-          <br />
-          完整程式碼：
-          <br />
-          <a
-            href="https://github.com/nohackjustnoobb/Mark-Six-Simulator"
-            target="_blank"
-          >
-            https://github.com/nohackjustnoobb/Mark-Six-Simulator
-          </a>
-        </p>
+        <div
+          style={{
+            height: "90%",
+            width: "100%",
+            overflowY: "scroll",
+          }}
+        >
+          <p>
+            真實六合彩攪珠結果：
+            <br />
+            當中數據從
+            <a
+              href="https://bet.hkjc.com/marksix/Results.aspx?lang=ch"
+              target="_blank"
+            >
+              賽馬會官網
+            </a>
+            所得。
+            <br /> <br />
+            模擬攪珠： <br />
+            每個號碼的攪珠時間大約為2.5秒，而程式會將最底的號碼作為中獎號碼，一共6個號碼和1個特別號碼。
+            <br />
+            <br />
+            完整程式碼：
+            <br />
+            <a
+              href="https://github.com/nohackjustnoobb/Mark-Six-Simulator"
+              target="_blank"
+            >
+              https://github.com/nohackjustnoobb/Mark-Six-Simulator
+            </a>
+          </p>
+        </div>
       </div>
     );
   }
@@ -316,7 +326,7 @@ class Marksix extends React.Component {
     });
   }
 
-  start_simulation() {
+  start_roll() {
     World.clear(engine.world, true);
     var counter = 0;
     var stack = Composites.stack(80, 110, 7, 7, 9, 1, (x, y) => {
@@ -385,7 +395,25 @@ class Marksix extends React.Component {
       this.setState({
         click: true,
       });
+      roll_history.push(this.state.roll);
+      window.update();
     }, 32200);
+  }
+
+  quick_roll() {
+    var roll = [];
+    for (var i = 0; i < 7; i++) {
+      var rand = Common.random(1, 49).toFixed(0);
+      while (roll.indexOf(rand) != -1) {
+        rand = Common.random(1, 49).toFixed(0);
+      }
+      roll.push(Number(rand));
+    }
+    roll_history.push(roll);
+    this.setState({
+      roll: roll,
+    });
+    window.update();
   }
 
   render() {
@@ -423,14 +451,14 @@ class Marksix extends React.Component {
     const result_list = this.state.roll.map((value, index) => {
       if (index == 6) {
         return (
-          <li key={value}>
+          <li>
             <FontAwesomeIcon icon={faPlus} />
             <img src={image_url[value - 1]}></img>
           </li>
         );
       }
       return (
-        <li key={value}>
+        <li>
           <img src={image_url[value - 1]}></img>
         </li>
       );
@@ -444,8 +472,16 @@ class Marksix extends React.Component {
         <div onClick={() => this.toggle_open()}>
           <FontAwesomeIcon icon={faAngleLeft} rotation={rotation} />
         </div>
-        <h6>注意：攪珠時請不要切換到其他分頁，否則球會飛出範圍。</h6>
-        <div id="marksix">
+        <h6
+          id="warning"
+          style={{ display: this.state.open ? "block" : "none" }}
+        >
+          注意：攪珠時請不要切換到其他分頁，否則球會飛出範圍。
+        </h6>
+        <div
+          id="marksix"
+          style={{ display: this.state.open ? "block" : "none" }}
+        >
           <div id="world"></div>
           <h5>攪珠結果：</h5>
           <div id="result">
@@ -453,11 +489,21 @@ class Marksix extends React.Component {
           </div>
           <button
             id="start_rolling"
-            onClick={() => this.start_simulation()}
+            onClick={() => this.start_roll()}
             disabled={!this.state.click}
           >
             開始攪珠
           </button>
+          <h6
+            id="quick_roll"
+            style={{
+              cursor: this.state.click ? "pointer" : "not-allowed",
+              color: this.state.click ? "#00006d" : "#ccc",
+            }}
+            onClick={this.state.click ? () => this.quick_roll() : () => {}}
+          >
+            <u>快速攪珠</u>
+          </h6>
         </div>
       </div>
     );
@@ -533,6 +579,7 @@ class VHistory extends React.Component {
       });
     }, 100);
     window.addEventListener("resize", () => this.forceUpdate());
+    window.update = () => this.forceUpdate();
   }
 
   toggle_open() {
@@ -565,19 +612,39 @@ class VHistory extends React.Component {
     };
     const rotation = this.state.open ? 270 : 0;
 
+    var roll_history_list = roll_history.map((value) => {
+      var list = value.map((value, index) => {
+        if (index == 6) {
+          return (
+            <div>
+              <FontAwesomeIcon
+                icon={faPlus}
+                style={{ transform: "translateY(5px)" }}
+              />
+              <img src={image_url[value - 1]}></img>
+            </div>
+          );
+        }
+        return <img src={image_url[value - 1]}></img>;
+      });
+      return <li>{list}</li>;
+    });
+
     return (
-      <div className="Bet right" style={div}>
+      <div className="VHistory right" style={div}>
         <div style={style_div}>
           <h5 style={style_h5}>模擬攪珠結果</h5>
         </div>
         <div onClick={() => this.toggle_open()}>
           <FontAwesomeIcon icon={faAngleLeft} rotation={rotation} />
         </div>
+        <ul id="roll_history">{roll_history_list}</ul>
       </div>
     );
   }
 }
 
+//Render root
 ReactDOM.render(
   <div className="row">
     <div className="col-md-3">
