@@ -36,7 +36,7 @@ function createWorld() {
     engine: engine,
     options: {
       width: 350,
-      height: 600,
+      height: 400,
       wireframes: false,
       background: "transparent",
     },
@@ -49,7 +49,7 @@ function createWorld() {
   var sradius = 8;
   const center = [175, 200];
   const radius = 150;
-  const border_color = "black";
+  const border_color = "#2b2ba1";
   setTimeout(() => {
     var cicrle_func_x = (x) => {
       return [
@@ -128,47 +128,6 @@ function createWorld() {
     }
     World.add(engine.world, cicrle_list);
   }, 700);
-}
-
-function start_simulation() {
-  World.clear(engine.world, true);
-  var counter = 0;
-  var stack = Composites.stack(80, 110, 7, 7, 9, 1, (x, y) => {
-    counter++;
-    return Bodies.circle(x, y, 10.5, {
-      label: "ball" + counter,
-      render: {
-        sprite: {
-          texture: image_url[counter - 1],
-        },
-      },
-    });
-  });
-  World.add(engine.world, [stack]);
-  shake();
-}
-
-function shake() {
-  var timeout = (timeout, obj) => {
-    setTimeout(() => {
-      Body.applyForce(obj, obj.position, {
-        x:
-          (Common.random(0, 1) * 10).toFixed(0) % 2 == 0
-            ? Common.random(0.007, 0.009)
-            : Common.random(-0.009, -0.007),
-        y: Common.random(-0.009, -0.007),
-      });
-    }, timeout);
-  };
-  var objlist = Composite.allBodies(engine.world);
-  var obj = objlist.slice(objlist.length - 49, objlist.length);
-  for (var j = 0; j < 12; j++) {
-    setTimeout(() => {
-      for (var i in obj) {
-        timeout(25 * i, obj[i]);
-      }
-    }, j * 400);
-  }
 }
 
 class RHistory extends React.Component {
@@ -301,7 +260,7 @@ class Intro extends React.Component {
     return (
       <div className="Intro left" style={div}>
         <div style={style_div}>
-          <h5 style={style_h5}>介紹和注意事項</h5>
+          <h5 style={style_h5}>介紹</h5>
         </div>
         <div onClick={() => this.toggle_open()}>
           <FontAwesomeIcon icon={faAngleLeft} rotation={rotation} />
@@ -319,11 +278,17 @@ class Intro extends React.Component {
           所得。
           <br /> <br />
           模擬攪珠： <br />
-          每個號碼的攪珠時間為5秒，而程式會將最底的號碼作為中獎號碼，一共6個號碼和1個特別號碼。
+          每個號碼的攪珠時間大約為2.5秒，而程式會將最底的號碼作為中獎號碼，一共6個號碼和1個特別號碼。
           <br />
           <br />
           完整程式碼：
           <br />
+          <a
+            href="https://github.com/nohackjustnoobb/Mark-Six-Simulator"
+            target="_blank"
+          >
+            https://github.com/nohackjustnoobb/Mark-Six-Simulator
+          </a>
         </p>
       </div>
     );
@@ -333,7 +298,7 @@ class Intro extends React.Component {
 class Marksix extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { div: false, open: true };
+    this.state = { div: false, open: true, roll: [], click: true };
   }
   componentDidMount() {
     setTimeout(() => {
@@ -349,6 +314,78 @@ class Marksix extends React.Component {
     this.setState({
       open: !this.state.open,
     });
+  }
+
+  start_simulation() {
+    World.clear(engine.world, true);
+    var counter = 0;
+    var stack = Composites.stack(80, 110, 7, 7, 9, 1, (x, y) => {
+      counter++;
+      return Bodies.circle(x, y, 10.5, {
+        label: "ball" + counter,
+        render: {
+          sprite: {
+            texture: image_url[counter - 1],
+          },
+        },
+      });
+    });
+    World.add(engine.world, [stack]);
+    this.setState({
+      roll: [],
+      click: false,
+    });
+    for (let _ = 0; _ < 7; _++) {
+      setTimeout(() => {
+        var roll = new Promise((resolve) => {
+          var timeout = (timeout, obj) => {
+            setTimeout(() => {
+              Body.applyForce(obj, obj.position, {
+                x:
+                  (Common.random(0, 1) * 10).toFixed(0) % 2 == 0
+                    ? Common.random(0.007, 0.009)
+                    : Common.random(-0.009, -0.007),
+                y: Common.random(-0.009, -0.007),
+              });
+            }, timeout);
+          };
+          var objlist = Composite.allBodies(engine.world);
+          var obj = objlist.slice(objlist.length - (49 - _), objlist.length);
+          for (var j = 0; j < 6; j++) {
+            setTimeout(() => {
+              for (var i in obj) {
+                timeout(10 * i, obj[i]);
+              }
+            }, j * 400);
+          }
+          setTimeout(() => {
+            var max = 0;
+            var max_obj;
+            for (var i of obj) {
+              if (i.position.y > max) {
+                max = i.position.y;
+                max_obj = i;
+              }
+            }
+            resolve(max_obj);
+          }, j * 400 + 700);
+        });
+
+        roll.then((value) => {
+          var roll = this.state.roll;
+          roll.push(Number(value.label.replace("ball", "")));
+          World.remove(engine.world, value, true);
+          this.setState({
+            roll: roll,
+          });
+        });
+      }, 4600 * _);
+    }
+    setTimeout(() => {
+      this.setState({
+        click: true,
+      });
+    }, 32200);
   }
 
   render() {
@@ -383,6 +420,21 @@ class Marksix extends React.Component {
       fontSize: 30,
     };
     const rotation = this.state.open ? 270 : 0;
+    const result_list = this.state.roll.map((value, index) => {
+      if (index == 6) {
+        return (
+          <li key={value}>
+            <FontAwesomeIcon icon={faPlus} />
+            <img src={image_url[value - 1]}></img>
+          </li>
+        );
+      }
+      return (
+        <li key={value}>
+          <img src={image_url[value - 1]}></img>
+        </li>
+      );
+    });
 
     return (
       <div className="Marksix center" style={div}>
@@ -392,10 +444,21 @@ class Marksix extends React.Component {
         <div onClick={() => this.toggle_open()}>
           <FontAwesomeIcon icon={faAngleLeft} rotation={rotation} />
         </div>
-        <div id="world"></div>
-        <button id="start_rolling" onClick={start_simulation}>
-          開始攪珠
-        </button>
+        <h6>注意：攪珠時請不要切換到其他分頁，否則球會飛出範圍。</h6>
+        <div id="marksix">
+          <div id="world"></div>
+          <h5>攪珠結果：</h5>
+          <div id="result">
+            <ul>{result_list}</ul>
+          </div>
+          <button
+            id="start_rolling"
+            onClick={() => this.start_simulation()}
+            disabled={!this.state.click}
+          >
+            開始攪珠
+          </button>
+        </div>
       </div>
     );
   }
