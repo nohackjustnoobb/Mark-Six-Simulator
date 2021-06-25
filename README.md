@@ -1,3 +1,7 @@
+# Issues
+CORS policy stopped the website to get the result of mark six 😢 Other function is working fine.
+
+
 # Mark Six simulator
 This is a tool that you can simulate mark six.
 
