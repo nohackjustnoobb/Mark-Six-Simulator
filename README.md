@@ -23,6 +23,10 @@ git clone https://github.com/nohackjustnoobb/Mark-Six-Simulator.git
 ```
 
 ```bash
+cd Mark-Six-Simulator
+```
+
+```bash
 npm install
 ```
 
