@@ -18,7 +18,7 @@ Source code: https://github.com/nohackjustnoobb/Mark-Six-Simulator
 </details>
 
 <details>
-            <summary>Android</summary>
+            <summary>Mobile:</summary>
 
 ![demo](https://i.imgur.com/cPiySPG.png)
 
